@@ -1,0 +1,8 @@
+## Interface: 80000
+## Title: Better CompactRaid
+## Notes: Improve default raid frames and raid-style party frames.
+## SavedVariables: bettercompactraidDB
+
+
+BetterCompactRaid.lua
+config.lua
