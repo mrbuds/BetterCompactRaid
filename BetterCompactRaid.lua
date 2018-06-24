@@ -39,6 +39,7 @@ local reorder_class = {  -- melee > hybrid > ranged
 }
 
 local function removeGroupLabel(prefix, mode, row)
+    if InCombatLockdown() then return end
     local groupFrame = _G[prefix]
     local groupLabelFrame = _G[prefix.."Title"]
     if groupLabelFrame then
@@ -59,6 +60,7 @@ local function removeGroupLabel(prefix, mode, row)
 end
 
 local function sortGroup(prefix, mode)
+    if InCombatLockdown() then return end
     local groupByRole, count = {}, 0
     if mode == "flush" then
         for _,unitFrame in pairs(CompactRaidFrameContainer.flowFrames) do
@@ -198,6 +200,7 @@ local function updateCRF()
 end
 
 local function hideRoleIcon(frame)
+    if InCombatLockdown() then return end
     if addon.db.noDpsIcon and frame and frame.roleIcon then
         local size = frame.roleIcon:GetHeight();
         local role = UnitGroupRolesAssigned(frame.unit)
@@ -257,6 +260,7 @@ end
 local eventFrame = CreateFrame("Frame", nil, InterfaceOptionsFramePanelContainer)
 eventFrame:SetScript("OnEvent", function(self, event, ...) self[event](self, ...) end)
 eventFrame:RegisterEvent("ADDON_LOADED")
+eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 addon.frame = eventFrame
 
 function eventFrame:ADDON_LOADED(loadedAddon)
@@ -276,22 +280,15 @@ function eventFrame:ADDON_LOADED(loadedAddon)
     addon.db = sv
 
     self.ADDON_LOADED = nil
+
+    hooksecurefunc("CompactUnitFrame_SetMaxBuffs", maxbuff)
+    hooksecurefunc("CompactUnitFrame_SetMaxDebuffs", maxdebuff)
+    hooksecurefunc("CompactUnitFrame_UpdateRoleIcon", hideRoleIcon)
+    hooksecurefunc("CompactRaidFrameContainer_LayoutFrames", updateCRF)
+    hooksecurefunc("CompactRaidFrameContainer_OnSizeChanged", updateCRF)
+    hooksecurefunc("CompactRaidFrameContainer_OnLoad", updateCRF)
 end
 
-hooksecurefunc("CompactUnitFrame_SetMaxBuffs", maxbuff)
-hooksecurefunc("CompactUnitFrame_SetMaxDebuffs", maxdebuff)
-hooksecurefunc("CompactUnitFrame_UpdateRoleIcon", hideRoleIcon)
-hooksecurefunc("CompactRaidFrameContainer_LayoutFrames", updateCRF)
-hooksecurefunc("CompactRaidFrameContainer_OnSizeChanged", updateCRF)
-hooksecurefunc("CompactRaidFrameContainer_OnLoad", updateCRF)
-
---updateCRF()
-
---[[
-local EventFrame = CreateFrame("Frame")
-EventFrame:RegisterEvent("PLAYER_LOGIN")
-EventFrame:SetScript("OnEvent", function(self,event,...)
-        
-     	ChatFrame1:AddMessage('BetterCompactRaid initialized.')
-end)
-]]--
+function eventFrame:PLAYER_ENTERING_WORLD(loadedAddon)
+    updateCRF()
+end
